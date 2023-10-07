@@ -27,6 +27,14 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
+    - name: Setup terraform variables
+      id: vars
+      run: |-
+        cat > pipeline.auto.tfvars <<EOF
+        db_username="${{ secrets.RDS_USER }}" 
+        db_password="${{ secrets.RDS_PASSWORD }}" 
+        EOF
+
     - name: Terraform Init
       run: terraform init
       
