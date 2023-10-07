@@ -39,9 +39,17 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
 
+    - name: Setup terraform variables
+      id: vars
+      run: |-
+        cat > pipeline.auto.tfvars <<EOF
+        db_username="${{ secrets.RDS_USER }}" 
+        db_password="${{ secrets.RDS_PASSWORD }}" 
+        EOF
+
     - name: Terraform Plan
       if: github.event_name == 'pull_request'
-      run: terraform plan -input=false
+      run: terraform plan -input=false -var-file="pipeline.auto.tfvars"
 
     - name: Update Pull Request
       uses: actions/github-script@v6
@@ -79,4 +87,4 @@ jobs:
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      run: terraform apply -auto-approve -input=false -var-file="pipeline.auto.tfvars"
