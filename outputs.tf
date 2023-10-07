@@ -8,7 +8,3 @@ output "rds_port" {
   value       = aws_db_instance.fiap_db.port
 }
 
-output "rds_username" {
-  description = "RDS instance root username"
-  value       = aws_db_instance.fiap_db.username
-}
