@@ -14,6 +14,8 @@ jobs:
     name: "Terraform"
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      actions: write
 
     steps:
       - name: Configure aws credentials
