@@ -69,7 +69,7 @@ jobs:
         run: terraform destroy -auto-approve -input=false -var-file="pipeline.auto.tfvars"
 
       - name: GitHub Script
-        uses: actions/github-script@v2.1.0
+        uses: actions/github-script@v6
         env:
           RDS_HOST: ${{ steps.apply.outputs.rds_hostname }}
         with:
