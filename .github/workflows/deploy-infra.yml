@@ -63,13 +63,17 @@ jobs:
 
       - name: GitHub Script
         uses: actions/github-script@v2.1.0
+        env:
+          RDS_HOST: ${{ steps.apply.outputs.rds_hostname }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script:  |
+            const { RDS_HOST } = process.env
+            console.log(`LOG HOST ${RDS_HOST}`)
             github.rest.actions.updateOrgVariable({
-              org: "FIAP-SOAT-GRP5",
-              name: "RDS_HOST",
-              value: \`${{ steps.apply.outputs.rds_hostname }}\`
+              org: 'FIAP-SOAT-GRP5',
+              name: 'RDS_HOST',
+              value: `${RDS_HOST}`
             })
 
       - name: Terraform Destroy
