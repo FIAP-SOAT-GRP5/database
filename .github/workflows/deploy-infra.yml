@@ -28,6 +28,8 @@ jobs:
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
 
       - name: Terraform Init
         run: terraform init
@@ -59,7 +61,12 @@ jobs:
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         id: apply
+        continue-on-error: true
         run: terraform apply -auto-approve -input=false -var-file="pipeline.auto.tfvars"
+
+      - name: Terraform Destroy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform destroy -auto-approve -input=false -var-file="pipeline.auto.tfvars"
 
       - name: GitHub Script
         uses: actions/github-script@v2.1.0
@@ -75,8 +82,3 @@ jobs:
               name: 'RDS_HOST',
               value: `${RDS_HOST}`
             })
-
-      - name: Terraform Destroy
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform destroy -auto-approve -input=false -var-file="pipeline.auto.tfvars"
-        
