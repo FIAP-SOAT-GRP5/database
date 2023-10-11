@@ -1,6 +1,10 @@
 name: "Deploy infraestructure with Terraform"
 
 on:
+  push:
+    branches:
+      - main
+
   pull_request:
     branches:
       - main
@@ -54,4 +58,21 @@ jobs:
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        id: apply
         run: terraform apply -auto-approve -input=false -var-file="pipeline.auto.tfvars"
+
+      - name: GitHub Script
+        uses: actions/github-script@v2.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script:  |
+            github.rest.actions.updateOrgVariable({
+              org: "FIAP-SOAT-GRP5",
+              name: "RDS_HOST",
+              value: \`${{ steps.apply.outputs.rds_hostname }}\`
+            })
+
+      - name: Terraform Destroy
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform destroy -auto-approve -input=false -var-file="pipeline.auto.tfvars"
+        
