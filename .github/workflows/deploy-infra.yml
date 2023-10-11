@@ -68,18 +68,12 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: terraform destroy -auto-approve -input=false -var-file="pipeline.auto.tfvars"
 
-      - name: GitHub Script
-        uses: actions/github-script@v6
-        env:
-          RDS_HOST: ${{ steps.apply.outputs.rds_hostname }}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script:  |
-            const { RDS_HOST } = process.env
-            console.log(`LOG HOST ${RDS_HOST}`)
-            console.log(github.rest.actions)
-            github.rest.actions.updateOrgVariable({
-              org: 'FIAP-SOAT-GRP5',
-              name: 'RDS_HOST',
-              value: `${RDS_HOST}`
-            })
+      - name: Update RDS Host Variable
+        run: |
+          curl -L \
+          -X PATCH \
+          -H 'Accept: application/vnd.github+json' \
+          -H 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+          -H 'X-GitHub-Api-Version: 2022-11-28' \
+          https://api.github.com/orgs/FIAP-SOAT-GRP5/actions/variables/RDS_HOST \
+          -d '{"value":"${{ steps.apply.outputs.rds_hostname }}"}'
