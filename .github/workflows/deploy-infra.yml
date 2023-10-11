@@ -1,0 +1,57 @@
+name: "Deploy infraestructure with Terraform"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    name: "Terraform"
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+        continue-on-error: true
+
+      - name: Terraform Format
+        run: terraform fmt -check
+
+      - name: Setup terraform variables
+        id: vars
+        run: |-
+          cat > pipeline.auto.tfvars <<EOF
+          db_username="${{ secrets.RDS_USER }}" 
+          db_password="${{ secrets.RDS_PASSWORD }}" 
+          EOF
+
+      - name: Terraform Plan
+        if: github.event_name == 'pull_request'
+        run: terraform plan -input=false -var-file="pipeline.auto.tfvars"
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false -var-file="pipeline.auto.tfvars"

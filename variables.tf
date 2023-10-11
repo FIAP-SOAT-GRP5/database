@@ -34,6 +34,12 @@ variable "settings" {
       "multi_az"            = false
       "identifier"          = "fiap-db"
     }
+    "ecr" = {
+      "repository_name"      = "fiap-grp5"
+      "force_delete"         = true
+      "image_tag_mutability" = "MUTABLE"
+      "scan_on_push"         = true
+    }
   }
 }
 

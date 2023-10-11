@@ -8,6 +8,7 @@ terraform {
 }
 
 provider "aws" {
+  alias  = "us_east_1"
   region = var.region
 }
 
@@ -60,6 +61,10 @@ resource "aws_route_table" "fiap_public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.fiap.id
   }
+
+  tags = {
+    Name = "FIAP"
+  }
 }
 
 resource "aws_route_table_association" "fiap_public" {
@@ -70,6 +75,10 @@ resource "aws_route_table_association" "fiap_public" {
 
 resource "aws_route_table" "fiap_private" {
   vpc_id = aws_vpc.fiap.id
+
+  tags = {
+    Name = "FIAP"
+  }
 }
 
 resource "aws_route_table_association" "fiap_private" {
@@ -98,6 +107,10 @@ resource "aws_security_group" "fiap_rds" {
 resource "aws_db_subnet_group" "fiap" {
   name       = "fiap"
   subnet_ids = [for subnet in aws_subnet.fiap_private : subnet.id]
+
+  tags = {
+    Name = "FIAP"
+  }
 }
 
 resource "aws_db_instance" "fiap_db" {
@@ -114,4 +127,24 @@ resource "aws_db_instance" "fiap_db" {
   identifier             = var.settings.database.identifier
   db_subnet_group_name   = aws_db_subnet_group.fiap.name
   vpc_security_group_ids = [aws_security_group.fiap_rds.id]
+  port                   = 3306
+
+  tags = {
+    Name = "FIAP"
+  }
+}
+
+resource "aws_ecr_repository" "fiap" {
+  provider = aws.us_east_1
+
+  name                 = var.settings.ecr.repository_name
+  force_delete         = var.settings.ecr.force_delete
+  image_tag_mutability = var.settings.ecr.image_tag_mutability
+  image_scanning_configuration {
+    scan_on_push = var.settings.ecr.scan_on_push
+  }
+
+  tags = {
+    Name = "FIAP"
+  }
 }
