@@ -77,6 +77,7 @@ jobs:
           script:  |
             const { RDS_HOST } = process.env
             console.log(`LOG HOST ${RDS_HOST}`)
+            console.log(github.rest.actions)
             github.rest.actions.updateOrgVariable({
               org: 'FIAP-SOAT-GRP5',
               name: 'RDS_HOST',
