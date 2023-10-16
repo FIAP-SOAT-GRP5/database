@@ -1,3 +1,8 @@
+variable "accountId" {
+  description = "Account ID"
+  type        = string
+}
+
 variable "region" {
   description = "Region for AWS resources"
   type        = string
@@ -8,6 +13,16 @@ variable "vpc_cidr_block" {
   description = "CIDR block for VPC"
   type        = string
   default     = "10.0.0.0/16"
+}
+
+variable "load_balancer_dns" {
+  description = "EKS Load Balancer DNS"
+  type        = string
+}
+
+variable "load_balancer_arn" {
+  description = "EKS Load Balancer ARN"
+  type        = string
 }
 
 variable "subnet_count" {

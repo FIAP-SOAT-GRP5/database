@@ -6,12 +6,17 @@ terraform {
     }
   }
 }
-
+###################
+# Initialize the
+# AWS provider
+###################
 provider "aws" {
   alias  = "us_east_1"
   region = var.region
 }
-
+###################
+# VPC and Network
+###################
 data "aws_availability_zones" "available" {
   state = "available"
 }
@@ -87,6 +92,11 @@ resource "aws_route_table_association" "fiap_private" {
   route_table_id = aws_route_table.fiap_private.id
 }
 
+
+###################
+# RDS
+###################
+
 resource "aws_security_group" "fiap_rds" {
   name   = "FIAP-RDS"
   vpc_id = aws_vpc.fiap.id
@@ -134,6 +144,9 @@ resource "aws_db_instance" "fiap_db" {
   }
 }
 
+###################
+# ECR
+###################
 resource "aws_ecr_repository" "fiap" {
   provider = aws.us_east_1
 
@@ -147,4 +160,157 @@ resource "aws_ecr_repository" "fiap" {
   tags = {
     Name = "FIAP"
   }
+}
+
+###################
+# Lambda
+###################
+# resource "aws_lambda_permission" "apigw_lambda" {
+#   statement_id  = "AllowExecutionFromAPIGateway"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.lambda.function_name
+#   principal     = "apigateway.amazonaws.com"
+
+#   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
+#   source_arn = "arn:aws:execute-api:${var.region}:${var.accountId}:${aws_api_gateway_rest_api.api.id}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
+# }
+
+# resource "aws_lambda_function" "lambda" {
+#   filename      = "lambda.zip"
+#   function_name = "mylambda"
+#   role          = aws_iam_role.role.arn
+#   handler       = "lambda.lambda_handler"
+#   runtime       = "python3.7"
+
+#   source_code_hash = filebase64sha256("lambda.zip")
+# }
+
+###################
+# VPC Link
+###################
+resource "aws_api_gateway_vpc_link" "fiap_app" {
+  name        = "fiap_app"
+  target_arns = [var.load_balancer_arn]
+}
+
+###################
+# API Gateway
+###################
+resource "aws_api_gateway_rest_api" "fiap" {
+  name = "fiap"
+
+}
+
+resource "aws_api_gateway_resource" "fiap_auth" {
+  parent_id   = aws_api_gateway_rest_api.fiap.root_resource_id
+  path_part   = "auth"
+  rest_api_id = aws_api_gateway_rest_api.fiap.id
+}
+
+resource "aws_api_gateway_method" "fiap_auth" {
+  http_method   = "POST"
+  authorization = "NONE"
+  resource_id   = aws_api_gateway_resource.fiap_auth.id
+  rest_api_id   = aws_api_gateway_rest_api.fiap.id
+  depends_on = [
+    aws_api_gateway_resource.fiap_auth,
+    aws_api_gateway_rest_api.fiap,
+  ]
+}
+
+resource "aws_api_gateway_integration" "fiap_auth" {
+  http_method             = aws_api_gateway_method.fiap_auth.http_method
+  resource_id             = aws_api_gateway_resource.fiap_auth.id
+  rest_api_id             = aws_api_gateway_rest_api.fiap.id
+  integration_http_method = "POST"
+  type                    = "MOCK"
+  # TODO: Implementar lambda
+  # type        = "AWS_PROXY"
+  # uri         = aws_lambda_function.lambda.invoke_arn
+  depends_on = [
+    aws_api_gateway_method.fiap_auth,
+    aws_api_gateway_resource.fiap_auth,
+    aws_api_gateway_rest_api.fiap,
+  ]
+}
+
+resource "aws_api_gateway_resource" "fiap_app" {
+  parent_id   = aws_api_gateway_rest_api.fiap.root_resource_id
+  path_part   = "{proxy+}"
+  rest_api_id = aws_api_gateway_rest_api.fiap.id
+}
+
+resource "aws_api_gateway_method" "fiap_app" {
+  http_method   = "ANY"
+  authorization = "NONE"
+  resource_id   = aws_api_gateway_resource.fiap_app.id
+  rest_api_id   = aws_api_gateway_rest_api.fiap.id
+  request_parameters = {
+    "method.request.path.proxy"           = true
+    "method.request.header.Authorization" = true
+  }
+  depends_on = [
+    aws_api_gateway_resource.fiap_app,
+    aws_api_gateway_rest_api.fiap,
+  ]
+}
+
+resource "aws_api_gateway_integration" "fiap_app" {
+  http_method             = aws_api_gateway_method.fiap_app.http_method
+  resource_id             = aws_api_gateway_resource.fiap_app.id
+  rest_api_id             = aws_api_gateway_rest_api.fiap.id
+  integration_http_method = "ANY"
+  # Valid values are:
+  # - HTTP (for HTTP backends)
+  # - MOCK (not calling any real backend)
+  # - AWS (for AWS services)
+  # - AWS_PROXY (for Lambda proxy integration)
+  # - HTTP_PROXY (for HTTP proxy integration).
+  # An HTTP or HTTP_PROXY integration with a connection_type of VPC_LINK is referred to
+  # as a private integration and uses a VpcLink to connect API Gateway to a network load balancer of a VPC.
+  type                 = "HTTP_PROXY"
+  uri                  = "http://${var.load_balancer_dns}/{proxy}"
+  passthrough_behavior = "WHEN_NO_MATCH"
+  content_handling     = "CONVERT_TO_TEXT"
+
+  connection_type = "VPC_LINK"
+  connection_id   = aws_api_gateway_vpc_link.fiap_app.id
+
+  request_parameters = {
+    "integration.request.path.proxy"           = "method.request.path.proxy"
+    "integration.request.header.Accept"        = "'application/json'"
+    "integration.request.header.Authorization" = "method.request.header.Authorization"
+  }
+
+  depends_on = [
+    aws_api_gateway_vpc_link.fiap_app,
+    aws_api_gateway_method.fiap_app,
+    aws_api_gateway_resource.fiap_app,
+    aws_api_gateway_rest_api.fiap,
+  ]
+}
+
+resource "aws_api_gateway_deployment" "fiap" {
+  rest_api_id = aws_api_gateway_rest_api.fiap.id
+
+  triggers = {
+    redeployment = sha1(jsonencode([
+      aws_api_gateway_resource.fiap_auth.id,
+      aws_api_gateway_method.fiap_auth.id,
+      aws_api_gateway_integration.fiap_auth.id,
+      aws_api_gateway_resource.fiap_app.id,
+      aws_api_gateway_method.fiap_app.id,
+      aws_api_gateway_integration.fiap_app.id,
+    ]))
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_api_gateway_stage" "fiap" {
+  deployment_id = aws_api_gateway_deployment.fiap.id
+  rest_api_id   = aws_api_gateway_rest_api.fiap.id
+  stage_name    = "fiap"
 }
