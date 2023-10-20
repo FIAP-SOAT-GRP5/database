@@ -6,6 +6,7 @@ terraform {
     }
   }
 }
+
 ###################
 # Initialize the
 # AWS provider
@@ -14,6 +15,7 @@ provider "aws" {
   alias  = "us_east_1"
   region = var.region
 }
+
 ###################
 # VPC and Network
 ###################
@@ -37,8 +39,8 @@ resource "aws_internet_gateway" "fiap" {
   }
 }
 
-resource "aws_subnet" "fiap_public" {
-  count                   = var.subnet_count.public
+resource "aws_subnet" "fiap" {
+  count                   = 2
   vpc_id                  = aws_vpc.fiap.id
   cidr_block              = var.public_subnet_cidr_blocks[count.index]
   availability_zone       = data.aws_availability_zones.available.names[count.index]
@@ -48,18 +50,7 @@ resource "aws_subnet" "fiap_public" {
   }
 }
 
-resource "aws_subnet" "fiap_private" {
-  count                   = var.subnet_count.private
-  vpc_id                  = aws_vpc.fiap.id
-  cidr_block              = var.private_subnet_cidr_blocks[count.index]
-  availability_zone       = data.aws_availability_zones.available.names[count.index]
-  map_public_ip_on_launch = false
-  tags = {
-    Name = "FIAP-Private-${count.index}"
-  }
-}
-
-resource "aws_route_table" "fiap_public" {
+resource "aws_route_table" "fiap" {
   vpc_id = aws_vpc.fiap.id
 
   route {
@@ -72,31 +63,16 @@ resource "aws_route_table" "fiap_public" {
   }
 }
 
-resource "aws_route_table_association" "fiap_public" {
-  count          = var.subnet_count.public
-  subnet_id      = aws_subnet.fiap_public[count.index].id
-  route_table_id = aws_route_table.fiap_public.id
-}
-
-resource "aws_route_table" "fiap_private" {
-  vpc_id = aws_vpc.fiap.id
-
-  tags = {
-    Name = "FIAP"
-  }
-}
-
-resource "aws_route_table_association" "fiap_private" {
-  count          = var.subnet_count.private
-  subnet_id      = aws_subnet.fiap_private[count.index].id
-  route_table_id = aws_route_table.fiap_private.id
+resource "aws_route_table_association" "fiap" {
+  count          = 2
+  subnet_id      = aws_subnet.fiap[count.index].id
+  route_table_id = aws_route_table.fiap.id
 }
 
 
 ###################
 # RDS
 ###################
-
 resource "aws_security_group" "fiap_rds" {
   name   = "FIAP-RDS"
   vpc_id = aws_vpc.fiap.id
@@ -116,7 +92,7 @@ resource "aws_security_group" "fiap_rds" {
 
 resource "aws_db_subnet_group" "fiap" {
   name       = "fiap"
-  subnet_ids = [for subnet in aws_subnet.fiap_private : subnet.id]
+  subnet_ids = [for subnet in aws_subnet.fiap : subnet.id]
 
   tags = {
     Name = "FIAP"
@@ -188,10 +164,10 @@ resource "aws_ecr_repository" "fiap" {
 ###################
 # VPC Link
 ###################
-resource "aws_api_gateway_vpc_link" "fiap_app" {
-  name        = "fiap_app"
-  target_arns = [var.load_balancer_arn]
-}
+# resource "aws_api_gateway_vpc_link" "fiap_app" {
+#   name        = "fiap_app"
+#   target_arns = [var.load_balancer_arn]
+# }
 
 ###################
 # API Gateway
@@ -268,13 +244,15 @@ resource "aws_api_gateway_integration" "fiap_app" {
   # - HTTP_PROXY (for HTTP proxy integration).
   # An HTTP or HTTP_PROXY integration with a connection_type of VPC_LINK is referred to
   # as a private integration and uses a VpcLink to connect API Gateway to a network load balancer of a VPC.
-  type                 = "HTTP_PROXY"
-  uri                  = "http://${var.load_balancer_dns}/{proxy}"
-  passthrough_behavior = "WHEN_NO_MATCH"
-  content_handling     = "CONVERT_TO_TEXT"
+  type = "MOCK"
+  # TODO: Implementar EKS
+  # type                 = "HTTP_PROXY"
+  # uri                  = "http://${var.load_balancer_dns}/{proxy}"
+  # passthrough_behavior = "WHEN_NO_MATCH"
+  # content_handling     = "CONVERT_TO_TEXT"
 
-  connection_type = "VPC_LINK"
-  connection_id   = aws_api_gateway_vpc_link.fiap_app.id
+  # connection_type = "VPC_LINK"
+  # connection_id   = aws_api_gateway_vpc_link.fiap_app.id
 
   request_parameters = {
     "integration.request.path.proxy"           = "method.request.path.proxy"
@@ -283,7 +261,7 @@ resource "aws_api_gateway_integration" "fiap_app" {
   }
 
   depends_on = [
-    aws_api_gateway_vpc_link.fiap_app,
+    # aws_api_gateway_vpc_link.fiap_app,
     aws_api_gateway_method.fiap_app,
     aws_api_gateway_resource.fiap_app,
     aws_api_gateway_rest_api.fiap,

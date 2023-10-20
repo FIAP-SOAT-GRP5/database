@@ -25,15 +25,6 @@ variable "load_balancer_arn" {
   type        = string
 }
 
-variable "subnet_count" {
-  description = "Number of subnets to create"
-  type        = map(number)
-  default = {
-    public  = 1
-    private = 2
-  }
-}
-
 variable "settings" {
   description = "Settings for the RDS"
   type        = map(any)
