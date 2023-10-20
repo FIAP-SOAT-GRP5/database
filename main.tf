@@ -27,7 +27,7 @@ resource "aws_vpc" "fiap" {
   cidr_block           = var.vpc_cidr_block
   enable_dns_hostnames = true
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
@@ -35,18 +35,18 @@ resource "aws_internet_gateway" "fiap" {
   vpc_id = aws_vpc.fiap.id
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
 resource "aws_subnet" "fiap" {
-  count                   = 2
+  count                   = var.settings.subnet.count
   vpc_id                  = aws_vpc.fiap.id
   cidr_block              = var.public_subnet_cidr_blocks[count.index]
   availability_zone       = data.aws_availability_zones.available.names[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = var.settings.subnet.map_public_ip_on_launch
   tags = {
-    Name = "FIAP-Public-${count.index}"
+    Name = var.settings.tag_default.name
   }
 }
 
@@ -59,12 +59,12 @@ resource "aws_route_table" "fiap" {
   }
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
 resource "aws_route_table_association" "fiap" {
-  count          = 2
+  count          = var.settings.subnet.count
   subnet_id      = aws_subnet.fiap[count.index].id
   route_table_id = aws_route_table.fiap.id
 }
@@ -79,14 +79,14 @@ resource "aws_security_group" "fiap_rds" {
 
   ingress {
     description = "MySQL traffic"
-    from_port   = 3306
-    to_port     = 3306
+    from_port   = var.settings.database.db_port
+    to_port     = var.settings.database.db_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
@@ -95,7 +95,7 @@ resource "aws_db_subnet_group" "fiap" {
   subnet_ids = [for subnet in aws_subnet.fiap : subnet.id]
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
@@ -113,10 +113,10 @@ resource "aws_db_instance" "fiap_db" {
   identifier             = var.settings.database.identifier
   db_subnet_group_name   = aws_db_subnet_group.fiap.name
   vpc_security_group_ids = [aws_security_group.fiap_rds.id]
-  port                   = 3306
+  port                   = var.settings.database.db_port
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
@@ -124,8 +124,7 @@ resource "aws_db_instance" "fiap_db" {
 # ECR
 ###################
 resource "aws_ecr_repository" "fiap" {
-  provider = aws.us_east_1
-
+  provider             = aws.us_east_1
   name                 = var.settings.ecr.repository_name
   force_delete         = var.settings.ecr.force_delete
   image_tag_mutability = var.settings.ecr.image_tag_mutability
@@ -134,32 +133,48 @@ resource "aws_ecr_repository" "fiap" {
   }
 
   tags = {
-    Name = "FIAP"
+    Name = var.settings.tag_default.name
   }
 }
 
 ###################
 # Lambda
 ###################
-# resource "aws_lambda_permission" "apigw_lambda" {
-#   statement_id  = "AllowExecutionFromAPIGateway"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.lambda.function_name
-#   principal     = "apigateway.amazonaws.com"
+resource "aws_iam_role" "fiap" {
+  name               = "serverless_example_lambda"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
 
-#   # More: http://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-control-access-using-iam-policies-to-invoke-api.html
-#   source_arn = "arn:aws:execute-api:${var.region}:${var.accountId}:${aws_api_gateway_rest_api.api.id}/*/${aws_api_gateway_method.method.http_method}${aws_api_gateway_resource.resource.path}"
-# }
+resource "aws_lambda_function" "fiap" {
+  filename         = var.settings.lambda.filename
+  function_name    = var.settings.lambda.function_name
+  handler          = var.settings.lambda.handler
+  runtime          = var.settings.lambda.runtime
+  role             = aws_iam_role.fiap.arn
+  source_code_hash = filebase64sha256(var.settings.lambda.filename)
+}
 
-# resource "aws_lambda_function" "lambda" {
-#   filename      = "lambda.zip"
-#   function_name = "mylambda"
-#   role          = aws_iam_role.role.arn
-#   handler       = "lambda.lambda_handler"
-#   runtime       = "python3.7"
-
-#   source_code_hash = filebase64sha256("lambda.zip")
-# }
+resource "aws_lambda_permission" "apigw" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.fiap.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_api_gateway_rest_api.fiap.execution_arn}/*/*"
+}
 
 ###################
 # VPC Link
@@ -179,12 +194,12 @@ resource "aws_api_gateway_rest_api" "fiap" {
 
 resource "aws_api_gateway_resource" "fiap_auth" {
   parent_id   = aws_api_gateway_rest_api.fiap.root_resource_id
-  path_part   = "auth"
   rest_api_id = aws_api_gateway_rest_api.fiap.id
+  path_part   = "auth"
 }
 
 resource "aws_api_gateway_method" "fiap_auth" {
-  http_method   = "POST"
+  http_method   = "ANY"
   authorization = "NONE"
   resource_id   = aws_api_gateway_resource.fiap_auth.id
   rest_api_id   = aws_api_gateway_rest_api.fiap.id
@@ -199,10 +214,8 @@ resource "aws_api_gateway_integration" "fiap_auth" {
   resource_id             = aws_api_gateway_resource.fiap_auth.id
   rest_api_id             = aws_api_gateway_rest_api.fiap.id
   integration_http_method = "POST"
-  type                    = "MOCK"
-  # TODO: Implementar lambda
-  # type        = "AWS_PROXY"
-  # uri         = aws_lambda_function.lambda.invoke_arn
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.fiap.invoke_arn
   depends_on = [
     aws_api_gateway_method.fiap_auth,
     aws_api_gateway_resource.fiap_auth,
@@ -281,6 +294,8 @@ resource "aws_api_gateway_deployment" "fiap" {
       aws_api_gateway_integration.fiap_app.id,
     ]))
   }
+
+  stage_name = "prod"
 
   lifecycle {
     create_before_destroy = true

@@ -29,8 +29,12 @@ variable "settings" {
   description = "Settings for the RDS"
   type        = map(any)
   default = {
+    "tag_default" = {
+      "name" = "fiap"
+    }
     "database" = {
       "allocated_storage"   = 20
+      "db_port"             = 3306
       "db_name"             = "fiap_db"
       "engine"              = "mysql"
       "engine_version"      = "8.0.33"
@@ -39,6 +43,16 @@ variable "settings" {
       "publicly_accessible" = true
       "multi_az"            = false
       "identifier"          = "fiap-db"
+    }
+    "subnet" = {
+      "count"                   = 2
+      "map_public_ip_on_launch" = true
+    }
+    "lambda" = {
+      "filename"      = "lambda.zip"
+      "function_name" = "fiap-auth"
+      "handler"       = "index.handler"
+      "runtime"       = "nodejs18.x"
     }
     "ecr" = {
       "repository_name"      = "fiap-grp5"

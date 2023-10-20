@@ -43,6 +43,7 @@ jobs:
           cat > pipeline.auto.tfvars <<EOF
           db_username="${{ secrets.RDS_USER }}" 
           db_password="${{ secrets.RDS_PASSWORD }}" 
+          accountId="${{ secrets.AWS_ACCOUNT_ID }}" 
           EOF
 
       - name: Terraform Plan
