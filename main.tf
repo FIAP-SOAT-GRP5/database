@@ -179,6 +179,7 @@ resource "aws_lambda_permission" "apigw" {
 ###################
 # VPC Link
 ###################
+# Para testes sem EKS, comentar o resource abaixo:
 resource "aws_api_gateway_vpc_link" "fiap_app" {
   name        = "fiap_app"
   target_arns = [var.load_balancer_arn]
@@ -257,6 +258,9 @@ resource "aws_api_gateway_integration" "fiap_app" {
   # - HTTP_PROXY (for HTTP proxy integration).
   # An HTTP or HTTP_PROXY integration with a connection_type of VPC_LINK is referred to
   # as a private integration and uses a VpcLink to connect API Gateway to a network load balancer of a VPC.
+
+  # Para testes sem EKS, alterar o type para MOCK e comentar os parâmetros abaixo:
+  # connection_type; connection_id; request_parameters; passthrough_behavior; content_handling
   type                 = "HTTP_PROXY"
   uri                  = "http://${var.load_balancer_dns}/{proxy}"
   passthrough_behavior = "WHEN_NO_MATCH"
@@ -272,7 +276,7 @@ resource "aws_api_gateway_integration" "fiap_app" {
   }
 
   depends_on = [
-    # aws_api_gateway_vpc_link.fiap_app,
+    aws_api_gateway_vpc_link.fiap_app, # Para testes sem EKS, comentar esta linha
     aws_api_gateway_method.fiap_app,
     aws_api_gateway_resource.fiap_app,
     aws_api_gateway_rest_api.fiap,

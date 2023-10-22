@@ -43,8 +43,8 @@ jobs:
           cat > pipeline.auto.tfvars <<EOF
           db_username="${{ secrets.RDS_USER }}" 
           db_password="${{ secrets.RDS_PASSWORD }}" 
-          load_balancer_dns="${{ secrets.EKS_LOAD_BALANCER_DNS }}" 
-          load_balancer_arn="${{ secrets.EKS_LOAD_BALANCER_ARN }}" 
+          load_balancer_dns="${{ vars.EKS_LOAD_BALANCER_DNS }}" 
+          load_balancer_arn="${{ vars.EKS_LOAD_BALANCER_ARN }}" 
           EOF
 
       - name: Terraform Plan
