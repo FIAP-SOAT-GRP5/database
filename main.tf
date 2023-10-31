@@ -138,6 +138,18 @@ resource "aws_ecr_repository" "fiap" {
 }
 
 ###################
+# S3
+###################
+resource "aws_s3_bucket" "fiap" {
+  bucket        = var.settings.s3.bucket_name
+  force_destroy = var.settings.s3.force_destroy
+
+  tags = {
+    Name = var.settings.tag_default.name
+  }
+}
+
+###################
 # Lambda
 ###################
 resource "aws_iam_role" "fiap" {
