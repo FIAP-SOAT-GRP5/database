@@ -121,23 +121,6 @@ resource "aws_db_instance" "fiap_db" {
 }
 
 ###################
-# ECR
-###################
-resource "aws_ecr_repository" "fiap" {
-  provider             = aws.us_east_1
-  name                 = var.settings.ecr.repository_name
-  force_delete         = var.settings.ecr.force_delete
-  image_tag_mutability = var.settings.ecr.image_tag_mutability
-  image_scanning_configuration {
-    scan_on_push = var.settings.ecr.scan_on_push
-  }
-
-  tags = {
-    Name = var.settings.tag_default.name
-  }
-}
-
-###################
 # S3
 ###################
 resource "aws_s3_bucket" "fiap" {
@@ -189,15 +172,6 @@ resource "aws_lambda_permission" "apigw" {
 }
 
 ###################
-# VPC Link
-###################
-# Para testes sem EKS, comentar o resource abaixo:
-resource "aws_api_gateway_vpc_link" "fiap_app" {
-  name        = "fiap_app"
-  target_arns = [var.load_balancer_arn]
-}
-
-###################
 # API Gateway
 ###################
 resource "aws_api_gateway_rest_api" "fiap" {
@@ -236,65 +210,6 @@ resource "aws_api_gateway_integration" "fiap_auth" {
   ]
 }
 
-resource "aws_api_gateway_resource" "fiap_app" {
-  parent_id   = aws_api_gateway_rest_api.fiap.root_resource_id
-  path_part   = "{proxy+}"
-  rest_api_id = aws_api_gateway_rest_api.fiap.id
-}
-
-resource "aws_api_gateway_method" "fiap_app" {
-  http_method   = "ANY"
-  authorization = "NONE"
-  resource_id   = aws_api_gateway_resource.fiap_app.id
-  rest_api_id   = aws_api_gateway_rest_api.fiap.id
-  request_parameters = {
-    "method.request.path.proxy"           = true
-    "method.request.header.Authorization" = true
-  }
-  depends_on = [
-    aws_api_gateway_resource.fiap_app,
-    aws_api_gateway_rest_api.fiap,
-  ]
-}
-
-resource "aws_api_gateway_integration" "fiap_app" {
-  http_method             = aws_api_gateway_method.fiap_app.http_method
-  resource_id             = aws_api_gateway_resource.fiap_app.id
-  rest_api_id             = aws_api_gateway_rest_api.fiap.id
-  integration_http_method = "ANY"
-  # Valid values are:
-  # - HTTP (for HTTP backends)
-  # - MOCK (not calling any real backend)
-  # - AWS (for AWS services)
-  # - AWS_PROXY (for Lambda proxy integration)
-  # - HTTP_PROXY (for HTTP proxy integration).
-  # An HTTP or HTTP_PROXY integration with a connection_type of VPC_LINK is referred to
-  # as a private integration and uses a VpcLink to connect API Gateway to a network load balancer of a VPC.
-
-  # Para testes sem EKS, alterar o type para MOCK e comentar os parâmetros abaixo:
-  # connection_type; connection_id; request_parameters; passthrough_behavior; content_handling
-  type                 = "HTTP_PROXY"
-  uri                  = "http://${var.load_balancer_dns}/{proxy}"
-  passthrough_behavior = "WHEN_NO_MATCH"
-  content_handling     = "CONVERT_TO_TEXT"
-
-  connection_type = "VPC_LINK"
-  connection_id   = aws_api_gateway_vpc_link.fiap_app.id
-
-  request_parameters = {
-    "integration.request.path.proxy"           = "method.request.path.proxy"
-    "integration.request.header.Accept"        = "'application/json'"
-    "integration.request.header.Authorization" = "method.request.header.Authorization"
-  }
-
-  depends_on = [
-    aws_api_gateway_vpc_link.fiap_app, # Para testes sem EKS, comentar esta linha
-    aws_api_gateway_method.fiap_app,
-    aws_api_gateway_resource.fiap_app,
-    aws_api_gateway_rest_api.fiap,
-  ]
-}
-
 resource "aws_api_gateway_deployment" "fiap" {
   rest_api_id = aws_api_gateway_rest_api.fiap.id
 
@@ -303,9 +218,6 @@ resource "aws_api_gateway_deployment" "fiap" {
       aws_api_gateway_resource.fiap_auth.id,
       aws_api_gateway_method.fiap_auth.id,
       aws_api_gateway_integration.fiap_auth.id,
-      aws_api_gateway_resource.fiap_app.id,
-      aws_api_gateway_method.fiap_app.id,
-      aws_api_gateway_integration.fiap_app.id,
     ]))
   }
 

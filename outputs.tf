@@ -12,8 +12,3 @@ output "apigateway_url" {
   description = "API Gateway URL"
   value       = aws_api_gateway_deployment.fiap.invoke_url
 }
-
-output "aws_ecr_repository_url" {
-  description = "AWS ECR Repository URL"
-  value       = aws_ecr_repository.fiap.repository_url
-}

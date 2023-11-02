@@ -40,7 +40,7 @@ variable "settings" {
       "identifier"          = "fiap-db"
     }
     "s3" = {
-      "bucket_name"   = "aws-sam-cli-managed-default-samclisourcebucket-dzcmderbpgut"
+      "bucket_name"   = "fiap-grp5-vianna"
       "force_destroy" = true
     }
     "subnet" = {
@@ -52,12 +52,6 @@ variable "settings" {
       "function_name" = "fiap-auth"
       "handler"       = "index.handler"
       "runtime"       = "nodejs18.x"
-    }
-    "ecr" = {
-      "repository_name"      = "fiap-grp5"
-      "force_delete"         = true
-      "image_tag_mutability" = "MUTABLE"
-      "scan_on_push"         = true
     }
   }
 }
