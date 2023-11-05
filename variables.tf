@@ -39,10 +39,6 @@ variable "settings" {
       "multi_az"            = false
       "identifier"          = "fiap-db"
     }
-    "s3" = {
-      "bucket_name"   = "fiap-grp5-vianna"
-      "force_destroy" = true
-    }
     "subnet" = {
       "count"                   = 2
       "map_public_ip_on_launch" = true
