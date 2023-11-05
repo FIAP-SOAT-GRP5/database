@@ -10,16 +10,6 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 
-variable "load_balancer_dns" {
-  description = "EKS Load Balancer DNS"
-  type        = string
-}
-
-variable "load_balancer_arn" {
-  description = "EKS Load Balancer ARN"
-  type        = string
-}
-
 variable "settings" {
   description = "Settings for the RDS"
   type        = map(any)
