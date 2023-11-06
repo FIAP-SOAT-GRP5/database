@@ -1,3 +1,3 @@
 # infra
 
-Infra
+Infra POS
