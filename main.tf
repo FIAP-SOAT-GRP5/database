@@ -220,4 +220,83 @@ resource "aws_api_gateway_stage" "fiap" {
   deployment_id = aws_api_gateway_deployment.fiap.id
   rest_api_id   = aws_api_gateway_rest_api.fiap.id
   stage_name    = "fiap"
+
+  tags = {
+    Name = var.settings.tag_default.name
+  }
+}
+
+###################
+# SQS
+###################
+resource "aws_sqs_queue" "fiap_create_order" {
+  name                      = "create_order"
+  delay_seconds             = 1
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+
+  tags = {
+    Name = var.settings.tag_default.name
+  }
+}
+
+resource "aws_sqs_queue" "fiap_update_order_status" {
+  name                      = "update_order_status"
+  delay_seconds             = 1
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+
+  tags = {
+    Name = var.settings.tag_default.name
+  }
+}
+
+data "aws_iam_policy_document" "fiap_create_order" {
+  statement {
+    sid    = "shsqsstatement"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "sqs:SendMessage",
+      "sqs:ReceiveMessage"
+    ]
+    resources = [
+      aws_sqs_queue.fiap_create_order.arn
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "fiap_update_order_status" {
+  statement {
+    sid    = "shsqsstatement"
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "sqs:SendMessage",
+      "sqs:ReceiveMessage"
+    ]
+    resources = [
+      aws_sqs_queue.fiap_update_order_status.arn
+    ]
+  }
+}
+
+resource "aws_sqs_queue_policy" "fiap_create_order" {
+  queue_url = aws_sqs_queue.fiap_create_order.id
+  policy    = data.aws_iam_policy_document.fiap_create_order.json
+}
+
+resource "aws_sqs_queue_policy" "fiap_update_order_status" {
+  queue_url = aws_sqs_queue.fiap_update_order_status.id
+  policy    = data.aws_iam_policy_document.fiap_update_order_status.json
 }
