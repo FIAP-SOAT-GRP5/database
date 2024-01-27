@@ -14,14 +14,16 @@ variable "settings" {
     "database" = {
       "allocated_storage"   = 20
       "db_port"             = 3306
-      "db_name"             = "fiap_db"
+      "db_name_order"       = "fiap_db"
+      "db_name_payment"     = "fiap_db"
       "engine"              = "mysql"
       "engine_version"      = "8.0.33"
       "instance_class"      = "db.t2.micro"
       "skip_final_snapshot" = true
       "publicly_accessible" = true
       "multi_az"            = false
-      "identifier"          = "fiap-db"
+      "identifier_order"    = "fiap-db-order"
+      "identifier_payment"  = "fiap-db-payment"
     }
     "subnet" = {
       "count"                   = 2
@@ -58,26 +60,28 @@ variable "db_password" {
   sensitive   = true
 }
 
-variable "securiry_group_name" {
+variable "securiry_group_name_rds" {
   description = "Security Group name"
   type        = string
   default     = "FIAP-RDS"
 }
 
-variable "db_subnet_group_name" {
+variable "securiry_group_name_ecs" {
+  description = "Security Group name"
+  type        = string
+  default     = "FIAP-ECS"
+}
+
+variable "db_subnet_group_name_order" {
   description = "DB Group name"
   type        = string
-  default     = "fiap"
+  default     = "fiap_order"
 }
 
-variable "db_username" {
-  description = "Username do Banco"
+variable "db_subnet_group_name_payment" {
+  description = "DB Group name"
   type        = string
-}
-
-variable "db_password" {
-  description = "Password do banco"
-  type        = string
+  default     = "fiap_payment"
 }
 
 variable "dynamo_table_name" {
@@ -189,7 +193,13 @@ variable "update_order_retention_seconds" {
   default     = 86400
 }
 
-variable "cloudwatch_log_group_name" {
+variable "cloudwatch_log_group_name_ecr" {
+  description = "Log name"
+  type        = string
+  default     = "ecr"
+}
+
+variable "cloudwatch_log_group_name_app" {
   description = "Log name"
   type        = string
   default     = "app"

@@ -1,3 +1,3 @@
 output "dynamodb_table_arn" {
-  value = module.my_dynamodb.arn
+  value = aws_dynamodb_table.fiap_dynamodb.arn
 }

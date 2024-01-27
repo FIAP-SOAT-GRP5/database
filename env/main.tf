@@ -4,50 +4,50 @@ module "aws_network" {
   vpc_cidr_block            = var.vpc_cidr_block
   public_subnet_cidr_blocks = var.public_subnet_cidr_blocks
   map_public_ip_on_launch   = var.settings.subnet.map_public_ip_on_launch
-  tags                      = var.settings.tag_default.name
-  securiry_group_name       = var.securiry_group_name
+  tags                      = var.settings.tag_default
+  securiry_group_name       = var.securiry_group_name_rds
   from_db_port              = var.settings.database.db_port
   to_db_port                = var.settings.database.db_port
 }
 
 module "aws_rds_order" {
   source               = "../modules/rds"
-  db_subnet_group_name = var.db_subnet_group_name
+  db_subnet_group_name = var.db_subnet_group_name_order
   subnet_ids           = module.aws_network.subnet_ids
   allocated_storage    = var.settings.database.allocated_storage
-  db_name              = var.settings.database.db_name
-  engine               = var.settings.database.db_name
-  engine_version       = var.settings.database.engine
+  db_name              = var.settings.database.db_name_order
+  engine               = var.settings.database.engine
+  engine_version       = var.settings.database.engine_version
   instance_class       = var.settings.database.instance_class
   db_username          = var.db_username
   db_password          = var.db_password
   skip_final_snapshot  = var.settings.database.skip_final_snapshot
   publicly_accessible  = var.settings.database.publicly_accessible
   multi_az             = var.settings.database.multi_az
-  identifier           = var.settings.database.identifier
-  security_group_ids   = module.aws_network.security_group_ids
+  identifier           = var.settings.database.identifier_order
+  security_group_ids   = [module.aws_network.security_group_ids]
   db_port              = var.settings.database.db_port
-  tags                 = var.settings.tag_default.name
+  tags                 = var.settings.tag_default
 }
 
 module "aws_rds_payment" {
   source               = "../modules/rds"
-  db_subnet_group_name = var.db_subnet_group_name
+  db_subnet_group_name = var.db_subnet_group_name_payment
   subnet_ids           = module.aws_network.subnet_ids
   allocated_storage    = var.settings.database.allocated_storage
-  db_name              = var.settings.database.db_name
-  engine               = var.settings.database.db_name
-  engine_version       = var.settings.database.engine
+  db_name              = var.settings.database.db_name_payment
+  engine               = var.settings.database.engine
+  engine_version       = var.settings.database.engine_version
   instance_class       = var.settings.database.instance_class
   db_username          = var.db_username
   db_password          = var.db_password
   skip_final_snapshot  = var.settings.database.skip_final_snapshot
   publicly_accessible  = var.settings.database.publicly_accessible
   multi_az             = var.settings.database.multi_az
-  identifier           = var.settings.database.identifier
-  security_group_ids   = module.aws_network.security_group_ids
+  identifier           = var.settings.database.identifier_payment
+  security_group_ids   = [module.aws_network.security_group_ids]
   db_port              = var.settings.database.db_port
-  tags                 = var.settings.tag_default.name
+  tags                 = var.settings.tag_default
 }
 
 module "aws_dynamo" {
@@ -55,7 +55,7 @@ module "aws_dynamo" {
   dynamo_table_name = var.dynamo_table_name
   billing_mode      = var.billing_mode
   hash_key          = var.hash_key
-  tags              = var.settings.tag_default.name
+  tags              = var.settings.tag_default
 }
 
 module "api_gateway" {
@@ -78,14 +78,14 @@ module "api_integration" {
   source                  = "../modules/api_integration"
   http_method             = module.api_gateway.http_method
   resource_id             = module.api_gateway.resource_id
-  rest_api_id             = module.api_gateway.resource_id
+  rest_api_id             = module.api_gateway.rest_api_id
   integration_http_method = var.integration_http_method
   integration_type        = var.integration_type
   uri                     = module.lambda.invoke_arn
   method_id               = module.api_gateway.http_id
   stage_deploy            = var.stage_deploy
   stage_name              = var.stage_name
-  tags                    = var.settings.tag_default.name
+  tags                    = var.settings.tag_default
 }
 # SQS queue para cada microservico
 module "sqs_queue_create_order" {
@@ -94,7 +94,7 @@ module "sqs_queue_create_order" {
   delay_seconds             = var.create_order_delay_seconds
   max_message_size          = var.create_order_message_size
   message_retention_seconds = var.create_order_retention_seconds
-  tags                      = var.settings.tag_default.name
+  tags                      = var.settings.tag_default
 }
 
 module "sqs_queue_update_order" {
@@ -103,15 +103,15 @@ module "sqs_queue_update_order" {
   delay_seconds             = var.update_order_delay_seconds
   max_message_size          = var.update_order_message_size
   message_retention_seconds = var.update_order_retention_seconds
-  tags                      = var.settings.tag_default.name
+  tags                      = var.settings.tag_default
 }
 
 module "ecr_repo" {
   source                    = "../modules/ecr"
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr
   respository_name          = var.respository_name
   ecs_cluster_name          = var.ecs_cluster_name
-  tags                      = var.settings.tag_default.name
+  tags                      = var.settings.tag_default
 }
 
 module "ecs_task_definition" {
@@ -123,12 +123,12 @@ module "ecs_task_definition" {
   family_name               = var.family_name
   container_name            = var.container_name
   image_url                 = module.ecr_repo.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
   vpc_id                    = module.aws_network.vpc_id
-  security_group_name       = module.aws_network.securiry_group_name
+  security_group_name       = var.securiry_group_name_ecs
   ecs_service_name          = var.ecs_service_name
   cluster_id                = module.ecr_repo.cluster_id
-  security_groups_ids       = module.aws_network.security_group_ids
+  security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
-  tags                      = var.settings.tag_default.name
+  tags                      = var.settings.tag_default
 }
