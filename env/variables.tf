@@ -66,12 +66,6 @@ variable "securiry_group_name_rds" {
   default     = "FIAP-RDS"
 }
 
-variable "securiry_group_name_ecs" {
-  description = "Security Group name"
-  type        = string
-  default     = "FIAP-ECS"
-}
-
 variable "db_subnet_group_name_order" {
   description = "DB Group name"
   type        = string
@@ -217,28 +211,76 @@ variable "ecs_cluster_name" {
   default     = "app_cluster"
 }
 
-variable "ecs_role_name" {
+variable "ecs_role_name_production" {
   description = "ECS Role Name"
   type        = string
-  default     = "ecs_role"
+  default     = "ecs_role_production"
 }
 
-variable "policy_name" {
+variable "ecs_role_name_payment" {
+  description = "ECS Role Name"
+  type        = string
+  default     = "ecs_role_payment"
+}
+
+variable "ecs_role_name_order" {
+  description = "ECS Role Name"
+  type        = string
+  default     = "ecs_role_order"
+}
+
+variable "policy_name_production" {
+  description = "Policy Name"
+  type        = string
+  default     = "ecs_policy_name_production"
+}
+
+variable "policy_name_payment" {
+  description = "Policy Name"
+  type        = string
+  default     = "ecs_policy_name_payment"
+}
+
+variable "policy_name_order" {
   description = "Policy Name"
   type        = string
   default     = "ecs_policy_name"
 }
 
-variable "excution_role_name" {
+variable "excution_role_name_production" {
   description = "Execution Role Name"
   type        = string
-  default     = "execution_role"
+  default     = "execution_role_production"
 }
 
-variable "execution_role_policy" {
+variable "excution_role_name_payment" {
+  description = "Execution Role Name"
+  type        = string
+  default     = "execution_role_payment"
+}
+
+variable "excution_role_name_order" {
+  description = "Execution Role Name"
+  type        = string
+  default     = "execution_role_order"
+}
+
+variable "execution_role_policy_production" {
   description = "Execution Role Policy"
   type        = string
-  default     = "execution_role_policy"
+  default     = "execution_role_policy_production"
+}
+
+variable "execution_role_policy_payment" {
+  description = "Execution Role Policy"
+  type        = string
+  default     = "execution_role_policy_payment"
+}
+
+variable "execution_role_policy_order" {
+  description = "Execution Role Policy"
+  type        = string
+  default     = "execution_role_policy_order"
 }
 
 variable "family_name" {
@@ -250,11 +292,41 @@ variable "family_name" {
 variable "container_name" {
   description = "Container Name"
   type        = string
-  default     = "container_name"
+  default     = "app"
 }
 
-variable "ecs_service_name" {
+variable "ecs_service_name_production" {
   description = "ECS Service Name"
   type        = string
-  default     = "app-service"
+  default     = "app-production"
+}
+
+variable "ecs_service_name_payment" {
+  description = "ECS Service Name"
+  type        = string
+  default     = "app-payment"
+}
+
+variable "ecs_service_name_order" {
+  description = "ECS Service Name"
+  type        = string
+  default     = "app-order"
+}
+
+variable "securiry_group_name_ecs_production" {
+  description = "Security Group name"
+  type        = string
+  default     = "FIAP-ECS-PRODUCTION"
+}
+
+variable "securiry_group_name_ecs_payment" {
+  description = "Security Group name"
+  type        = string
+  default     = "FIAP-ECS-PAYMENT"
+}
+
+variable "securiry_group_name_ecs_order" {
+  description = "Security Group name"
+  type        = string
+  default     = "FIAP-ECS-ORDER"
 }

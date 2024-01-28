@@ -114,19 +114,57 @@ module "ecr_repo" {
   tags                      = var.settings.tag_default
 }
 
-module "ecs_task_definition" {
+module "ecs_task_definition_production" {
   source                    = "../modules/ecs_task"
-  ecs_role_name             = var.ecs_role_name
-  policy_name               = var.policy_name
-  excution_role_name        = var.excution_role_name
-  execution_role_policy     = var.execution_role_policy
+  ecs_role_name             = var.ecs_role_name_production
+  policy_name               = var.policy_name_production
+  excution_role_name        = var.excution_role_name_production
+  execution_role_policy     = var.execution_role_policy_production
   family_name               = var.family_name
   container_name            = var.container_name
   image_url                 = module.ecr_repo.repository_url
   cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
   vpc_id                    = module.aws_network.vpc_id
-  security_group_name       = var.securiry_group_name_ecs
-  ecs_service_name          = var.ecs_service_name
+  security_group_name       = var.securiry_group_name_ecs_production
+  ecs_service_name          = var.ecs_service_name_production
+  cluster_id                = module.ecr_repo.cluster_id
+  security_groups_ids       = [module.aws_network.security_group_ids]
+  subnet_ids                = module.aws_network.subnet_ids
+  tags                      = var.settings.tag_default
+}
+
+module "ecs_task_definition_payment" {
+  source                    = "../modules/ecs_task"
+  ecs_role_name             = var.ecs_role_name_payment
+  policy_name               = var.policy_name_payment
+  excution_role_name        = var.excution_role_name_payment
+  execution_role_policy     = var.execution_role_policy_payment
+  family_name               = var.family_name
+  container_name            = var.container_name
+  image_url                 = module.ecr_repo.repository_url
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
+  vpc_id                    = module.aws_network.vpc_id
+  security_group_name       = var.securiry_group_name_ecs_payment
+  ecs_service_name          = var.ecs_service_name_payment
+  cluster_id                = module.ecr_repo.cluster_id
+  security_groups_ids       = [module.aws_network.security_group_ids]
+  subnet_ids                = module.aws_network.subnet_ids
+  tags                      = var.settings.tag_default
+}
+
+module "ecs_task_definition_order" {
+  source                    = "../modules/ecs_task"
+  ecs_role_name             = var.ecs_role_name_order
+  policy_name               = var.policy_name_order
+  excution_role_name        = var.excution_role_name_order
+  execution_role_policy     = var.execution_role_policy_order
+  family_name               = var.family_name
+  container_name            = var.container_name
+  image_url                 = module.ecr_repo.repository_url
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
+  vpc_id                    = module.aws_network.vpc_id
+  security_group_name       = var.securiry_group_name_ecs_order
+  ecs_service_name          = var.ecs_service_name_order
   cluster_id                = module.ecr_repo.cluster_id
   security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
