@@ -5,6 +5,7 @@ resource "aws_cloudwatch_log_group" "app" {
 
 resource "aws_ecr_repository" "ecr_app" {
   name = var.respository_name
+  force_delete = true
 
   tags = var.tags
 

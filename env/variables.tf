@@ -17,7 +17,7 @@ variable "settings" {
       "db_name_order"       = "fiap_db"
       "db_name_payment"     = "fiap_db"
       "engine"              = "mysql"
-      "engine_version"      = "8.0.33"
+      "engine_version"      = "8.0.35"
       "instance_class"      = "db.t2.micro"
       "skip_final_snapshot" = true
       "publicly_accessible" = true
