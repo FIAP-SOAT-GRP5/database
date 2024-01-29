@@ -138,10 +138,16 @@ variable "stage_name" {
   default     = "fiap"
 }
 
-variable "create_order_name" {
+variable "create_order_name_payment" {
   description = "Order Name"
   type        = string
-  default     = "create_order"
+  default     = "create_order_payment"
+}
+
+variable "create_order_name_production" {
+  description = "Order Name"
+  type        = string
+  default     = "create_order_production"
 }
 
 variable "create_order_delay_seconds" {

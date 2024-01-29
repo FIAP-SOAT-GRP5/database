@@ -80,9 +80,18 @@ module "api_integration" {
   tags                    = var.settings.tag_default
 }
 # SQS queue para cada microservico
-module "sqs_queue_create_order" {
+module "sqs_queue_create_order_payment" {
   source                    = "../modules/sqs"
-  sqs_queue_name            = var.create_order_name
+  sqs_queue_name            = var.create_order_name_payment
+  delay_seconds             = var.create_order_delay_seconds
+  max_message_size          = var.create_order_message_size
+  message_retention_seconds = var.create_order_retention_seconds
+  tags                      = var.settings.tag_default
+}
+
+module "sqs_queue_create_order_production" {
+  source                    = "../modules/sqs"
+  sqs_queue_name            = var.create_order_name_production
   delay_seconds             = var.create_order_delay_seconds
   max_message_size          = var.create_order_message_size
   message_retention_seconds = var.create_order_retention_seconds

@@ -1,5 +1,9 @@
+data "aws_iam_policy" "dynamodb" {
+  name = "AmazonDynamoDBFullAccess"
+}
+
 resource "aws_iam_role" "fiap" {
-  name               = "serverless_example_lambda"
+  name               = "auth0-lambda-role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -15,4 +19,9 @@ resource "aws_iam_role" "fiap" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "dynamodb" {
+  role       = "${aws_iam_role.fiap.name}"
+  policy_arn = "${data.aws_iam_policy.dynamodb.arn}"
 }
