@@ -30,12 +30,12 @@ module "aws_rds_order" {
   tags                 = var.settings.tag_default
 }
 
-module "aws_rds_payment" {
+module "aws_rds_production" {
   source               = "../modules/rds"
-  db_subnet_group_name = var.db_subnet_group_name_payment
+  db_subnet_group_name = var.db_subnet_group_name_production
   subnet_ids           = module.aws_network.subnet_ids
   allocated_storage    = var.settings.database.allocated_storage
-  db_name              = var.settings.database.db_name_payment
+  db_name              = var.settings.database.db_name_production
   engine               = var.settings.database.engine
   engine_version       = var.settings.database.engine_version
   instance_class       = var.settings.database.instance_class
@@ -44,19 +44,19 @@ module "aws_rds_payment" {
   skip_final_snapshot  = var.settings.database.skip_final_snapshot
   publicly_accessible  = var.settings.database.publicly_accessible
   multi_az             = var.settings.database.multi_az
-  identifier           = var.settings.database.identifier_payment
+  identifier           = var.settings.database.identifier_production
   security_group_ids   = [module.aws_network.security_group_ids]
   db_port              = var.settings.database.db_port
   tags                 = var.settings.tag_default
 }
 
-module "aws_dynamo" {
-  source            = "../modules/dynamo"
-  dynamo_table_name = var.dynamo_table_name
-  billing_mode      = var.billing_mode
-  hash_key          = var.hash_key
-  tags              = var.settings.tag_default
-}
+# module "aws_dynamo" {
+#   source            = "../modules/dynamo"
+#   dynamo_table_name = var.dynamo_table_name
+#   billing_mode      = var.billing_mode
+#   hash_key          = var.hash_key
+#   tags              = var.settings.tag_default
+# }
 
 module "api_gateway" {
   source        = "../modules/api_gateway"
@@ -106,11 +106,27 @@ module "sqs_queue_update_order" {
   tags                      = var.settings.tag_default
 }
 
-module "ecr_repo" {
+module "ecr_repo_production" {
   source                    = "../modules/ecr"
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr
-  respository_name          = var.respository_name
-  ecs_cluster_name          = var.ecs_cluster_name
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_production
+  respository_name          = var.respository_name_production
+  ecs_cluster_name          = var.ecs_cluster_name_production
+  tags                      = var.settings.tag_default
+}
+
+module "ecr_repo_payment" {
+  source                    = "../modules/ecr"
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_payment
+  respository_name          = var.respository_name_payment
+  ecs_cluster_name          = var.ecs_cluster_name_payment
+  tags                      = var.settings.tag_default
+}
+
+module "ecr_repo_order" {
+  source                    = "../modules/ecr"
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_order
+  respository_name          = var.respository_name_order
+  ecs_cluster_name          = var.ecs_cluster_name_order
   tags                      = var.settings.tag_default
 }
 
@@ -120,14 +136,14 @@ module "ecs_task_definition_production" {
   policy_name               = var.policy_name_production
   excution_role_name        = var.excution_role_name_production
   execution_role_policy     = var.execution_role_policy_production
-  family_name               = var.family_name
-  container_name            = var.container_name
-  image_url                 = module.ecr_repo.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
+  family_name               = var.family_name_production
+  container_name            = var.container_name_production
+  image_url                 = module.ecr_repo_production.repository_url
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_production
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_production
   ecs_service_name          = var.ecs_service_name_production
-  cluster_id                = module.ecr_repo.cluster_id
+  cluster_id                = module.ecr_repo_production.cluster_id
   security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
   tags                      = var.settings.tag_default
@@ -139,14 +155,14 @@ module "ecs_task_definition_payment" {
   policy_name               = var.policy_name_payment
   excution_role_name        = var.excution_role_name_payment
   execution_role_policy     = var.execution_role_policy_payment
-  family_name               = var.family_name
-  container_name            = var.container_name
-  image_url                 = module.ecr_repo.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
+  family_name               = var.family_name_payment
+  container_name            = var.container_name_payment
+  image_url                 = module.ecr_repo_payment.repository_url
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_payment
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_payment
   ecs_service_name          = var.ecs_service_name_payment
-  cluster_id                = module.ecr_repo.cluster_id
+  cluster_id                = module.ecr_repo_payment.cluster_id
   security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
   tags                      = var.settings.tag_default
@@ -158,15 +174,37 @@ module "ecs_task_definition_order" {
   policy_name               = var.policy_name_order
   excution_role_name        = var.excution_role_name_order
   execution_role_policy     = var.execution_role_policy_order
-  family_name               = var.family_name
-  container_name            = var.container_name
-  image_url                 = module.ecr_repo.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app
+  family_name               = var.family_name_order
+  container_name            = var.container_name_order
+  image_url                 = module.ecr_repo_order.repository_url
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_order
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_order
   ecs_service_name          = var.ecs_service_name_order
-  cluster_id                = module.ecr_repo.cluster_id
+  cluster_id                = module.ecr_repo_order.cluster_id
   security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
   tags                      = var.settings.tag_default
+}
+
+module "documentdb" {
+  source                  = "../modules/documentdb"
+  subnet_group_name       = var.subnet_group_name
+  subnet_ids              = module.aws_network.subnet_ids
+  environment             = var.environment
+  cluster_name            = var.cluster_name
+  cluster_identifier      = var.cluster_identifier
+  master_username         = var.master_username
+  master_password         = var.master_password
+  backup_retention_period = var.backup_retention_period
+  skip_final_snapshot     = var.skip_final_snapshot
+  db_subnet_group_name    = var.subnet_group_name
+  apply_immediately       = var.apply_immediately
+  engine                  = var.engine
+  engine_version          = var.engine_version
+  storage_encrypted       = var.storage_encrypted
+  instance_class          = var.instance_class
+  availability_zones      = var.availability_zones
+  vpc_security_group_ids  = [module.aws_network.security_group_ids]
+  tags                    = var.settings.tag_default
 }

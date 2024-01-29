@@ -15,8 +15,8 @@ jobs:
     environment: production
     permissions: write-all
     defaults:
-        run:
-          working-directory: env/
+      run:
+        working-directory: env/
 
     steps:
       - name: Configure aws credentials
@@ -48,7 +48,9 @@ jobs:
         run: |-
           cat > pipeline.auto.tfvars <<EOF
           db_username="${{ secrets.RDS_USER }}" 
-          db_password="${{ secrets.RDS_PASSWORD }}" 
+          db_password="${{ secrets.RDS_PASSWORD }}"
+          master_username="${{ secrets.MONGO_USER }}"
+          master_password="${{ secrets.MONGO_PASSWORD }}"
           EOF
 
       - name: Terraform Plan

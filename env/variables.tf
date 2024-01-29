@@ -15,7 +15,7 @@ variable "settings" {
       "allocated_storage"   = 20
       "db_port"             = 3306
       "db_name_order"       = "fiap_db"
-      "db_name_payment"     = "fiap_db"
+      "db_name_production"     = "fiap_db"
       "engine"              = "mysql"
       "engine_version"      = "8.0.35"
       "instance_class"      = "db.t2.micro"
@@ -23,7 +23,7 @@ variable "settings" {
       "publicly_accessible" = true
       "multi_az"            = false
       "identifier_order"    = "fiap-db-order"
-      "identifier_payment"  = "fiap-db-payment"
+      "identifier_production"  = "fiap-db-production"
     }
     "subnet" = {
       "count"                   = 2
@@ -63,7 +63,7 @@ variable "db_password" {
 variable "securiry_group_name_rds" {
   description = "Security Group name"
   type        = string
-  default     = "FIAP-RDS"
+  default     = "FIAP"
 }
 
 variable "db_subnet_group_name_order" {
@@ -72,10 +72,10 @@ variable "db_subnet_group_name_order" {
   default     = "fiap_order"
 }
 
-variable "db_subnet_group_name_payment" {
+variable "db_subnet_group_name_production" {
   description = "DB Group name"
   type        = string
-  default     = "fiap_payment"
+  default     = "fiap_production"
 }
 
 variable "dynamo_table_name" {
@@ -187,28 +187,76 @@ variable "update_order_retention_seconds" {
   default     = 86400
 }
 
-variable "cloudwatch_log_group_name_ecr" {
+variable "cloudwatch_log_group_name_ecr_production" {
   description = "Log name"
   type        = string
-  default     = "ecr"
+  default     = "ecr_production"
 }
 
-variable "cloudwatch_log_group_name_app" {
+variable "cloudwatch_log_group_name_ecr_payment" {
   description = "Log name"
   type        = string
-  default     = "app"
+  default     = "ecr_payment"
 }
 
-variable "respository_name" {
+variable "cloudwatch_log_group_name_ecr_order" {
+  description = "Log name"
+  type        = string
+  default     = "ecr_order"
+}
+
+variable "cloudwatch_log_group_name_app_production" {
+  description = "Log name"
+  type        = string
+  default     = "app_production"
+}
+
+variable "cloudwatch_log_group_name_app_payment" {
+  description = "Log name"
+  type        = string
+  default     = "app_payment"
+}
+
+variable "cloudwatch_log_group_name_app_order" {
+  description = "Log name"
+  type        = string
+  default     = "app_order"
+}
+
+variable "respository_name_production" {
   description = "Repo name"
   type        = string
-  default     = "app_repo"
+  default     = "app_repo_production"
 }
 
-variable "ecs_cluster_name" {
+variable "respository_name_payment" {
+  description = "Repo name"
+  type        = string
+  default     = "app_repo_payment"
+}
+
+variable "respository_name_order" {
+  description = "Repo name"
+  type        = string
+  default     = "app_repo_order"
+}
+
+variable "ecs_cluster_name_production" {
   description = "Cluster Name"
   type        = string
-  default     = "app_cluster"
+  default     = "app_cluster_production"
+}
+
+variable "ecs_cluster_name_payment" {
+  description = "Cluster Name"
+  type        = string
+  default     = "app_cluster_payment"
+}
+
+variable "ecs_cluster_name_order" {
+  description = "Cluster Name"
+  type        = string
+  default     = "app_cluster_order"
 }
 
 variable "ecs_role_name_production" {
@@ -283,16 +331,40 @@ variable "execution_role_policy_order" {
   default     = "execution_role_policy_order"
 }
 
-variable "family_name" {
+variable "family_name_production" {
   description = "Family Name"
   type        = string
-  default     = "app"
+  default     = "app-production"
 }
 
-variable "container_name" {
+variable "family_name_payment" {
+  description = "Family Name"
+  type        = string
+  default     = "app-payment"
+}
+
+variable "family_name_order" {
+  description = "Family Name"
+  type        = string
+  default     = "app-order"
+}
+
+variable "container_name_production" {
   description = "Container Name"
   type        = string
-  default     = "app"
+  default     = "app-production"
+}
+
+variable "container_name_payment" {
+  description = "Container Name"
+  type        = string
+  default     = "app-payment"
+}
+
+variable "container_name_order" {
+  description = "Container Name"
+  type        = string
+  default     = "app-order"
 }
 
 variable "ecs_service_name_production" {
@@ -329,4 +401,103 @@ variable "securiry_group_name_ecs_order" {
   description = "Security Group name"
   type        = string
   default     = "FIAP-ECS-ORDER"
+}
+
+
+variable "cluster_identifier" {
+  description = "Identifier for the DocumentDB cluster"
+  type        = string
+  default     = "docdb-cluster"
+}
+
+variable "instance_count" {
+  description = "Number of instances in the DocumentDB cluster"
+  type        = number
+  default     = 1
+}
+
+variable "instance_class" {
+  description = "Instance class for the DocumentDB cluster"
+  type        = string
+  default     = "db.t3.medium"
+}
+
+variable "availability_zones" {
+  description = "List of availability zones for the DocumentDB cluster"
+  type        = list(string)
+  default = [
+    "us-east-1a",
+  ]
+}
+
+variable "subnet_group_name" {
+  description = "Name for the DocumentDB subnet group"
+  type        = string
+  default     = "docdb-subnet-group"
+}
+
+variable "master_username" {
+  description = "Username for the DocumentDB master user"
+  type        = string
+}
+
+variable "master_password" {
+  description = "Password for the DocumentDB master user"
+  type        = string
+}
+
+# variable "vpc_security_group_ids" {
+#   description = "List of VPC security group IDs for the DocumentDB cluster"
+#   type        = list(string)
+# }
+
+variable "backup_retention_period" {
+  description = "Backup retention period for the DocumentDB cluster"
+  type        = number
+  default     = 7
+}
+
+variable "engine" {
+  description = "Engine"
+  type        = string
+  default     = "docdb"
+}
+
+variable "engine_version" {
+  description = "engine-version"
+  type        = string
+  default     = "5.0"
+
+}
+
+variable "storage_encrypted" {
+  description = "Storage-encrypted"
+  type        = string
+  default     = "true"
+
+}
+
+variable "cluster_name" {
+  description = "cluster_name"
+  type        = string
+  default     = "documentdb"
+
+}
+
+variable "environment" {
+  description = "Environment for the DocumentDB cluster"
+  type        = string
+  default     = "PROD"
+}
+
+variable "skip_final_snapshot" {
+  description = "Skip final snapshot for the DocumentDB cluster"
+  type        = bool
+  default     = true
+}
+
+variable "apply_immediately" {
+  description = "Apply immediately for the DocumentDB cluster"
+  type        = bool
+  default     = true
 }

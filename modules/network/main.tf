@@ -42,9 +42,9 @@ resource "aws_security_group" "fiap_rds" {
   vpc_id = aws_vpc.fiap.id
 
   ingress {
-    description = "MySQL traffic"
-    from_port   = var.from_db_port
-    to_port     = var.to_db_port
+    description = "Ports"
+    from_port   = "0"
+    to_port     = "0"
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
