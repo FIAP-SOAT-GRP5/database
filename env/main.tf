@@ -50,14 +50,6 @@ module "aws_rds_production" {
   tags                 = var.settings.tag_default
 }
 
-# module "aws_dynamo" {
-#   source            = "../modules/dynamo"
-#   dynamo_table_name = var.dynamo_table_name
-#   billing_mode      = var.billing_mode
-#   hash_key          = var.hash_key
-#   tags              = var.settings.tag_default
-# }
-
 module "api_gateway" {
   source        = "../modules/api_gateway"
   api_name      = var.api_name
@@ -139,7 +131,7 @@ module "ecs_task_definition_production" {
   family_name               = var.family_name_production
   container_name            = var.container_name_production
   image_url                 = module.ecr_repo_production.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_production
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_production
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_production
   ecs_service_name          = var.ecs_service_name_production
@@ -158,7 +150,7 @@ module "ecs_task_definition_payment" {
   family_name               = var.family_name_payment
   container_name            = var.container_name_payment
   image_url                 = module.ecr_repo_payment.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_payment
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_payment
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_payment
   ecs_service_name          = var.ecs_service_name_payment
@@ -177,7 +169,7 @@ module "ecs_task_definition_order" {
   family_name               = var.family_name_order
   container_name            = var.container_name_order
   image_url                 = module.ecr_repo_order.repository_url
-  cloudwatch_log_group_name = var.cloudwatch_log_group_name_app_order
+  cloudwatch_log_group_name = var.cloudwatch_log_group_name_ecr_order
   vpc_id                    = module.aws_network.vpc_id
   security_group_name       = var.securiry_group_name_ecs_order
   ecs_service_name          = var.ecs_service_name_order
@@ -185,26 +177,4 @@ module "ecs_task_definition_order" {
   security_groups_ids       = [module.aws_network.security_group_ids]
   subnet_ids                = module.aws_network.subnet_ids
   tags                      = var.settings.tag_default
-}
-
-module "documentdb" {
-  source                  = "../modules/documentdb"
-  subnet_group_name       = var.subnet_group_name
-  subnet_ids              = module.aws_network.subnet_ids
-  environment             = var.environment
-  cluster_name            = var.cluster_name
-  cluster_identifier      = var.cluster_identifier
-  master_username         = var.master_username
-  master_password         = var.master_password
-  backup_retention_period = var.backup_retention_period
-  skip_final_snapshot     = var.skip_final_snapshot
-  db_subnet_group_name    = var.subnet_group_name
-  apply_immediately       = var.apply_immediately
-  engine                  = var.engine
-  engine_version          = var.engine_version
-  storage_encrypted       = var.storage_encrypted
-  instance_class          = var.instance_class
-  availability_zones      = var.availability_zones
-  vpc_security_group_ids  = [module.aws_network.security_group_ids]
-  tags                    = var.settings.tag_default
 }
