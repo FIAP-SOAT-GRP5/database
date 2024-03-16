@@ -168,6 +168,66 @@ variable "create_order_retention_seconds" {
   default     = 86400
 }
 
+variable "payment_canceled_name_order" {
+  description = "Order Name"
+  type        = string
+  default     = "payment_canceled_order"
+}
+
+variable "payment_canceled_name_production" {
+  description = "Order Name"
+  type        = string
+  default     = "payment_canceled_production"
+}
+
+variable "payment_canceled_delay_seconds" {
+  description = "Delay in seconds"
+  type        = number
+  default     = 1
+}
+
+variable "payment_canceled_message_size" {
+  description = "max message size"
+  type        = number
+  default     = 2048
+}
+
+variable "payment_canceled_retention_seconds" {
+  description = "Retention Seconds"
+  type        = number
+  default     = 86400
+}
+
+variable "payment_approved_name_order" {
+  description = "Order Name"
+  type        = string
+  default     = "payment_approved_order"
+}
+
+variable "payment_approved_name_production" {
+  description = "Order Name"
+  type        = string
+  default     = "payment_approved_production"
+}
+
+variable "payment_approved_delay_seconds" {
+  description = "Delay in seconds"
+  type        = number
+  default     = 1
+}
+
+variable "payment_approved_message_size" {
+  description = "max message size"
+  type        = number
+  default     = 2048
+}
+
+variable "payment_approved_retention_seconds" {
+  description = "Retention Seconds"
+  type        = number
+  default     = 86400
+}
+
 
 variable "update_order_name" {
   description = "Update Name"

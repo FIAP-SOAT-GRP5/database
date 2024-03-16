@@ -98,6 +98,42 @@ module "sqs_queue_create_order_production" {
   tags                      = var.settings.tag_default
 }
 
+module "sqs_queue_payment_canceled_order" {
+  source                    = "../modules/sqs"
+  sqs_queue_name            = var.payment_canceled_name_order
+  delay_seconds             = var.payment_canceled_delay_seconds
+  max_message_size          = var.payment_canceled_message_size
+  message_retention_seconds = var.payment_canceled_retention_seconds
+  tags                      = var.settings.tag_default
+}
+
+module "sqs_queue_payment_canceled_production" {
+  source                    = "../modules/sqs"
+  sqs_queue_name            = var.payment_canceled_name_production
+  delay_seconds             = var.payment_canceled_delay_seconds
+  max_message_size          = var.payment_canceled_message_size
+  message_retention_seconds = var.payment_canceled_retention_seconds
+  tags                      = var.settings.tag_default
+}
+
+module "sqs_queue_payment_approved_order" {
+  source                    = "../modules/sqs"
+  sqs_queue_name            = var.payment_approved_name_order
+  delay_seconds             = var.payment_approved_delay_seconds
+  max_message_size          = var.payment_approved_message_size
+  message_retention_seconds = var.payment_approved_retention_seconds
+  tags                      = var.settings.tag_default
+}
+
+module "sqs_queue_payment_approved_production" {
+  source                    = "../modules/sqs"
+  sqs_queue_name            = var.payment_approved_name_production
+  delay_seconds             = var.payment_approved_delay_seconds
+  max_message_size          = var.payment_approved_message_size
+  message_retention_seconds = var.payment_approved_retention_seconds
+  tags                      = var.settings.tag_default
+}
+
 module "sqs_queue_update_order" {
   source                    = "../modules/sqs"
   sqs_queue_name            = var.update_order_name
